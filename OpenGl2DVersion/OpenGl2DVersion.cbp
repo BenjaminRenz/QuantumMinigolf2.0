@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6" />
+	<Project>
+		<Option title="QMG2" />
+		<Option pch_mode="2" />
+		<Option compiler="gcc" />
+		<Build>
+			<Target title="Debug">
+				<Option output="bin/Debug/QMG2" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Debug/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-g" />
+				</Compiler>
+			</Target>
+			<Target title="Release">
+				<Option output="bin/Release/QMG2" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Release/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-march=corei7" />
+					<Add option="-fexpensive-optimizations" />
+					<Add option="-O3" />
+				</Compiler>
+				<Linker>
+					<Add option="-s" />
+				</Linker>
+			</Target>
+		</Build>
+		<Compiler>
+			<Add option="-O3" />
+			<Add option="-Wall" />
+			<Add option="-m64" />
+			<Add directory="libraries/GLEW_2.1.0/include" />
+			<Add directory="libraries/GLFW_3.2.1/include" />
+			<Add directory="libraries/FFTW_3.3.5/include" />
+			<Add directory="libraries/LINMATH/include" />
+			<Add directory="inc" />
+			<Add directory="src" />
+			<Add directory="../../../../Software/msys2/mingw64/x86_64-w64-mingw32" />
+		</Compiler>
+		<Linker>
+			<Add option="-static-libgcc" />
+			<Add option="-m64" />
+			<Add library="glew32s" />
+			<Add library="libglfw3.a" />
+			<Add library="opengl32" />
+			<Add library="gdi32" />
+			<Add library="libfftw3-3" />
+			<Add library="liboleaut32.a" />
+			<Add library="libole32.a" />
+			<Add library="libstrmiids.a" />
+			<Add library="libmf.a" />
+			<Add directory="libraries/GLEW_2.1.0/lib_mingw_64" />
+			<Add directory="libraries/GLFW_3.2.1/lib_mingw_64" />
+			<Add directory="libraries/FFTW_3.3.5/lib_mingw_64" />
+			<Add directory="../../../../Software/msys2/mingw64/x86_64-w64-mingw32/lib" />
+		</Linker>
+		<Unit filename="inc/calibration_mode.h" />
+		<Unit filename="inc/camera_dshow.h" />
+		<Unit filename="inc/filereader.h" />
+		<Unit filename="inc/gl_utils.h" />
+		<Unit filename="inc/image_analyse.h" />
+		<Unit filename="inc/linmath.h" />
+		<Unit filename="inc/map_camera_plane.h" />
+		<Unit filename="inc/simulation.h" />
+		<Unit filename="main.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="res/potentials/double_slit512.bmp" />
+		<Unit filename="res/shaders/fragment_calib.glsl" />
+		<Unit filename="res/shaders/fragment_graph.glsl" />
+		<Unit filename="res/shaders/fragment_gui.glsl" />
+		<Unit filename="res/shaders/fragment_target.glsl" />
+		<Unit filename="res/shaders/fragment_track.glsl" />
+		<Unit filename="res/shaders/vertex_calib.glsl" />
+		<Unit filename="res/shaders/vertex_graph.glsl" />
+		<Unit filename="res/shaders/vertex_gui.glsl" />
+		<Unit filename="res/shaders/vertex_target.glsl" />
+		<Unit filename="res/shaders/vertex_track.glsl" />
+		<Unit filename="res/textures/GUI2.bmp" />
+		<Unit filename="src/calibration_mode.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/camera_dshow.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/filereader.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/gl_utils.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/image_analyse.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/map_camera_plane.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/simulation.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Extensions>
+			<code_completion />
+			<envvars />
+			<debugger />
+			<lib_finder disable_auto="1" />
+		</Extensions>
+	</Project>
+</CodeBlocks_project_file>

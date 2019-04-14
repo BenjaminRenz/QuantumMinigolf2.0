@@ -1,0 +1,10 @@
+To add new potentials please use the "empty_with_border.bmp" template. 
+Requierements for the potential images:
+-filename.bmp
+-512*512 Resolution
+-32bit A8R8G8B8
+-BitmapV5Header
+-compression type: Bitfields
+-the blue channel is used for the potential, all other channels are ignored
+-only supports up to 20 images in the folder potentials
+GIMP2 has been used to generate these images 
