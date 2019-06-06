@@ -82,7 +82,7 @@ void update_potential();
 void GUI_refresh();
 void camera_collider(int C_OBJECT_STATE ,vec2 posNewIn);
 void standard_draw();
-
+float getAspectRatio();
 enum {type_wave_gauss_width,type_wave_momentum,type_wave_angle,type_wave_dt};
 float mapValue(int type,float input);
 void Reset();
@@ -175,10 +175,28 @@ void Measurement();
 #define UV_GUI_JOYSTICK_BORDER_DOWN_RIGHT_X   (1024.0f/1024.0f)
 #define UV_GUI_JOYSTICK_BORDER_DOWN_RIGHT_Y   ( 740.0f/1024.0f)
 
-#define UV_TARGET_TOP_LEFT_X    (520.0f/1024.0f)
-#define UV_TARGET_TOP_LEFT_Y    (592.0f/1024.0f)
-#define UV_TARGET_DOWN_RIGHT_X  (780.0f/1024.0f)
-#define UV_TARGET_DOWN_RIGHT_Y  (332.0f/1024.0f)
+#define UV_TARGET_TOP_LEFT_X    (0.0f/1024.0f)
+#define UV_TARGET_TOP_LEFT_Y    (512.0f/1024.0f)
+#define UV_TARGET_DOWN_RIGHT_X  (512.0f/1024.0f)
+#define UV_TARGET_DOWN_RIGHT_Y  (0.0f/1024.0f)
+
+
+//Winnscreen
+#define GUI_TYPE_WINSCREEN 9
+#define UV_GUI_WINSCREEN_WIN_TOP_LEFT_X     (   0.0f/1024.0f)
+#define UV_GUI_WINSCREEN_WIN_DOWN_RIGHT_Y   ( 768.0f/1024.0f)
+#define UV_GUI_WINSCREEN_WIN_DOWN_RIGHT_X   (1024.0f/1024.0f)
+#define UV_GUI_WINSCREEN_WIN_TOP_LEFT_Y     (1024.0f/1024.0f)
+
+#define UV_GUI_WINSCREEN_LOSE_TOP_LEFT_X    (   0.0f/1024.0f)
+#define UV_GUI_WINSCREEN_LOSE_DOWN_RIGHT_Y  ( 512.0f/1024.0f)
+#define UV_GUI_WINSCREEN_LOSE_DOWN_RIGHT_X  (1024.0f/1024.0f)
+#define UV_GUI_WINSCREEN_LOSE_TOP_LEFT_Y    ( 768.0f/1024.0f)
+
+
+
+
+
 //Instantiated GUI_elements
 //Slider x
 #define SLIDER_X_NUMBER 3
@@ -212,7 +230,6 @@ void Measurement();
 
 
 
-
 struct GUI_render {
     float top_left_x;       //between [0,(9/16 or 3/4)]
     float top_left_y;       //between [0,1]
@@ -229,8 +246,8 @@ GLFWwindow* MainWindow;
 GLuint psiTexture;
 float delta_time;
 //@numgui
-int numberOfGuiElements = SLIDER_X_NUMBER+SLIDER_Y_NUMBER+JOYSTICK_NUMBER+BUTTON_NUMBER;
-int selectedGuiElement = (-1);   //-1 == no element selected
+int numberOfGuiElements = 1;        //SLIDER_X_NUMBER+SLIDER_Y_NUMBER+JOYSTICK_NUMBER+BUTTON_NUMBER;
+int selectedGuiElement = (-1);      //-1 == no element selected
 struct GUI_render* guiElementsStorage;
 double rotation_up_down = M_PI/3;
 double rotation_left_right = M_PI;
@@ -328,6 +345,12 @@ int main(int argc, char* argv[]) {
     guiElementsStorage = malloc(numberOfGuiElements * sizeof(struct GUI_render));
     //Screen coordinates from x[-1.0f,1.0f] y[-1.0f,1.0f]
     //0 for SIZE, 1 for SPEED
+    guiElementsStorage[0].top_left_x=0.25f;
+    guiElementsStorage[0].top_left_y=0.2f;
+    guiElementsStorage[0].position_x=0.5f;
+    guiElementsStorage[0].percentOfWidth=0.5f;
+    guiElementsStorage[0].GUI_TYPE=GUI_TYPE_WINSCREEN;
+    /*
     guiElementsStorage[GUI_SLIDER_SIZE].top_left_x = 0.0f;
     guiElementsStorage[GUI_SLIDER_SIZE].top_left_y = 0.0f;
     guiElementsStorage[GUI_SLIDER_SIZE].position_x = 0.5f;
@@ -373,7 +396,7 @@ int main(int argc, char* argv[]) {
     guiElementsStorage[GUI_BUTTON_POTENTIAL].position_x = 0.0f;
     guiElementsStorage[GUI_BUTTON_POTENTIAL].percentOfWidth = 0.2f;
     guiElementsStorage[GUI_BUTTON_POTENTIAL].GUI_TYPE = GUI_TYPE_BUTTON_POTENTIAL;
-
+    */
     //If you add a gui element remember to increase "number of gui elements @numgui
 
     //GLFW init
@@ -499,12 +522,13 @@ int main(int argc, char* argv[]) {
     drawGui(G_OBJECT_INIT, 0);   //Initialize Gui with GL_OBJECT_INIT,aspect ratio
     standard_draw(); //Do not move before drawGui(G_OBJECT_INIT,0);
     GUI_refresh();
+    printf("Got here \n\n\n");
+    //printf("Got here \n\n\n");
     while(!glfwWindowShouldClose(MainWindow)) { //Main Programm loop
+        //printf("Got HERE\n\n\n");
         simulation_run(dt);
         delta_time = update_delta_time();
         //Check for Camera frame update
-
-
         if(already_calibrated){
             int* BrightSpot=getBrightspot(brightspot_get);
             if(BrightSpot){
@@ -609,12 +633,17 @@ int main(int argc, char* argv[]) {
         mat4x4 tempTargetCombined;
         mat4x4_mul(tempTargetCombined,mvp4x4,tempScaleTransMat);
 
-
-        drawTargetBox(G_OBJECT_DRAW,tempTargetCombined,MeasColorBySim); //
+        drawTargetBox(G_OBJECT_DRAW,tempTargetCombined,MeasColorBySim);
         if(track_toggle){
             drawTrackPoint(G_OBJECT_DRAW,mvp4x4,0,0);
         }
-        drawGui(G_OBJECT_DRAW,0);
+        //drawGui(G_OBJECT_DRAW,0);
+        if(MeasColorBySim!=Meas_yellow){
+            guiElementsStorage[0].position_x=(float)MeasColorBySim;
+            drawGui(G_OBJECT_UPDATE,getAspectRatio());
+            printf("Got here \n\n\n");
+            drawGui(G_OBJECT_DRAW,0);
+        }
         //Swap Buffers
         glFinish();
         glfwSwapBuffers(MainWindow);
@@ -1080,6 +1109,7 @@ void drawGui(int G_OBJECT_STATE, float aspectRatio) {
                 break;
             case GUI_TYPE_BUTTON_CONTROL:
             case GUI_TYPE_BUTTON_POTENTIAL:
+            case GUI_TYPE_WINSCREEN:
                 numberOfQuads += 1;
                 break;
             case GUI_TYPE_JOYSTICK_ROTATION:
@@ -1176,6 +1206,18 @@ void drawGui(int G_OBJECT_STATE, float aspectRatio) {
                 GUI_positions_and_uv[offsetInGuiPaUV++] = glCoordsY - aspectRatio * glCoordsSize * ((positionY * 0.5f + 0.5f) * (1 - GUI_JOYSTICK_PROPERTY_SCALE));
                 GUI_positions_and_uv[offsetInGuiPaUV++] = glCoordsX + glCoordsSize * (1 - (1 - GUI_JOYSTICK_PROPERTY_SCALE) * (positionX * (-0.5f) + 0.5f)); //UPPERRIGHT
                 GUI_positions_and_uv[offsetInGuiPaUV++] = glCoordsY - aspectRatio * glCoordsSize * ((positionY * 0.5f + 0.5f) * (1 - GUI_JOYSTICK_PROPERTY_SCALE));
+            } else if(guiElementsStorage[gElmt].GUI_TYPE==GUI_TYPE_WINSCREEN){
+                float glCoordsX = 2.0f * (guiElementsStorage[gElmt].top_left_x - 0.5f);   //Transform coordinates from [0,1] to [-1,1]
+                float glCoordsY = -2.0f * (guiElementsStorage[gElmt].top_left_y * aspectRatio - 0.5f);   //Transform coordinates from [0,1] to [-1,1]
+                float glCoordsSize = 2.0f * guiElementsStorage[gElmt].percentOfWidth;   //Transform coordinates from [0,1] to [-1,1]
+                GUI_positions_and_uv[offsetInGuiPaUV++] = glCoordsX;
+                GUI_positions_and_uv[offsetInGuiPaUV++] = glCoordsY - aspectRatio * glCoordsSize * 0.25f;
+                GUI_positions_and_uv[offsetInGuiPaUV++] = glCoordsX + glCoordsSize;
+                GUI_positions_and_uv[offsetInGuiPaUV++] = glCoordsY - aspectRatio * glCoordsSize * 0.25f;
+                GUI_positions_and_uv[offsetInGuiPaUV++] = glCoordsX;
+                GUI_positions_and_uv[offsetInGuiPaUV++] = glCoordsY;
+                GUI_positions_and_uv[offsetInGuiPaUV++] = glCoordsX + glCoordsSize;
+                GUI_positions_and_uv[offsetInGuiPaUV++] = glCoordsY;
             }
         }
         for(int gElmt = 0; gElmt < numberOfGuiElements; gElmt++) {
@@ -1384,6 +1426,26 @@ void drawGui(int G_OBJECT_STATE, float aspectRatio) {
                 GUI_positions_and_uv[offsetInGuiPaUV++] = UV_GUI_JOYSTICK_WAVE_MOVE_TOP_LEFT_Y;
                 GUI_positions_and_uv[offsetInGuiPaUV++] = UV_GUI_JOYSTICK_WAVE_MOVE_DOWN_RIGHT_X;
                 GUI_positions_and_uv[offsetInGuiPaUV++] = UV_GUI_JOYSTICK_WAVE_MOVE_TOP_LEFT_Y;
+            } else if(guiElementsStorage[gElmt].GUI_TYPE==GUI_TYPE_WINSCREEN){
+                if(guiElementsStorage[gElmt].position_x == 0.0f) {
+                    GUI_positions_and_uv[offsetInGuiPaUV++] = UV_GUI_WINSCREEN_WIN_TOP_LEFT_X;
+                    GUI_positions_and_uv[offsetInGuiPaUV++] = UV_GUI_WINSCREEN_WIN_DOWN_RIGHT_Y;
+                    GUI_positions_and_uv[offsetInGuiPaUV++] = UV_GUI_WINSCREEN_WIN_DOWN_RIGHT_X;
+                    GUI_positions_and_uv[offsetInGuiPaUV++] = UV_GUI_WINSCREEN_WIN_DOWN_RIGHT_Y;
+                    GUI_positions_and_uv[offsetInGuiPaUV++] = UV_GUI_WINSCREEN_WIN_TOP_LEFT_X;
+                    GUI_positions_and_uv[offsetInGuiPaUV++] = UV_GUI_WINSCREEN_WIN_TOP_LEFT_Y;
+                    GUI_positions_and_uv[offsetInGuiPaUV++] = UV_GUI_WINSCREEN_WIN_DOWN_RIGHT_X;
+                    GUI_positions_and_uv[offsetInGuiPaUV++] = UV_GUI_WINSCREEN_WIN_TOP_LEFT_Y;
+                } else if(guiElementsStorage[gElmt].position_x == 1.0f) {
+                    GUI_positions_and_uv[offsetInGuiPaUV++] = UV_GUI_WINSCREEN_LOSE_TOP_LEFT_X;
+                    GUI_positions_and_uv[offsetInGuiPaUV++] = UV_GUI_WINSCREEN_LOSE_DOWN_RIGHT_Y;
+                    GUI_positions_and_uv[offsetInGuiPaUV++] = UV_GUI_WINSCREEN_LOSE_DOWN_RIGHT_X;
+                    GUI_positions_and_uv[offsetInGuiPaUV++] = UV_GUI_WINSCREEN_LOSE_DOWN_RIGHT_Y;
+                    GUI_positions_and_uv[offsetInGuiPaUV++] = UV_GUI_WINSCREEN_LOSE_TOP_LEFT_X;
+                    GUI_positions_and_uv[offsetInGuiPaUV++] = UV_GUI_WINSCREEN_LOSE_TOP_LEFT_Y;
+                    GUI_positions_and_uv[offsetInGuiPaUV++] = UV_GUI_WINSCREEN_LOSE_DOWN_RIGHT_X;
+                    GUI_positions_and_uv[offsetInGuiPaUV++] = UV_GUI_WINSCREEN_LOSE_TOP_LEFT_Y;
+                }
             }
         }
         {
@@ -1667,12 +1729,12 @@ void standard_draw(){
 void windows_size_callback(GLFWwindow* window, int width, int height) {
     glViewport(0, 0, width, height);
     //Refresh lower GUI Border
-    guiElementsStorage[GUI_BUTTON_CONTROL].top_left_y = (height / (float)width) - guiElementsStorage[GUI_BUTTON_CONTROL].percentOfWidth * 0.25f;
+    /*guiElementsStorage[GUI_BUTTON_CONTROL].top_left_y = (height / (float)width) - guiElementsStorage[GUI_BUTTON_CONTROL].percentOfWidth * 0.25f;
     guiElementsStorage[GUI_BUTTON_POTENTIAL].top_left_y = ((height / (float)width) - guiElementsStorage[GUI_BUTTON_POTENTIAL].percentOfWidth * 0.25f) -0.06f; //-0.1f because button should be on top of other button
     guiElementsStorage[GUI_JOYSTICK_MOVEMENT].top_left_y = (height / (float)width) - guiElementsStorage[GUI_JOYSTICK_MOVEMENT].percentOfWidth;
     guiElementsStorage[GUI_JOYSTICK_ROTATION].top_left_y = (height / (float)width) - guiElementsStorage[GUI_JOYSTICK_ROTATION].percentOfWidth;
     guiElementsStorage[GUI_JOYSTICK_WAVE_MOVE].top_left_y = (height / (float)width) - guiElementsStorage[GUI_JOYSTICK_WAVE_MOVE].percentOfWidth;
-    drawGui(G_OBJECT_UPDATE, width / (float)height);
+    */drawGui(G_OBJECT_UPDATE, width / (float)height);
 }
 
 float mapValue(int type,float input){
@@ -1700,11 +1762,17 @@ float mapValue(int type,float input){
 
 }
 
+float getAspectRatio(){
+    int width=0;
+    int height=0;
+    glfwGetWindowSize(MainWindow,&width,&height);
+    return width/(float)height;
+}
 //GUI
 void GUI_refresh(){
     int width=0;
     int height=0;
     glfwGetWindowSize(MainWindow,&width,&height);
     windows_size_callback(MainWindow,width,height);
-    drawGui(G_OBJECT_DRAW, width/(float)height);
+    drawGui(G_OBJECT_DRAW, 0);
 }
