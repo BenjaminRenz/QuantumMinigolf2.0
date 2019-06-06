@@ -4,7 +4,7 @@
 #include <stdlib.h>
 
 enum {simulation_state_not_allocated,simulation_state_simulate,simulation_state_measurement_animation,simulation_state_created_and_wait_for_start,simulation_state_wait_for_restart};
-
+int MeasColorBySim;
 int simulation_state=simulation_state_not_allocated;
 int simulation_paused;
 //typedef double fftw_complex[2];
@@ -97,6 +97,15 @@ int simulation_redraw_wave(int offset_x,int offset_y,float angle,float momentum,
 }
 
 int simulation_run(float dt){
+    if((simulation_state!=simulation_state_created_and_wait_for_start)&&(simulation_state!=simulation_state_simulate)){
+        printf("Warn: Wave packet not initialized, won't start simulation!\n");
+        return 1;
+    }
+    //printf("Paused:? %d\n",simulation_paused);
+    if(simulation_paused){
+
+        return 2;
+    }
     static float dt_old=0.f;
     if(dt_old!=dt){ //Generate new momentum prop
         for(int y = 0; y < sim_res_y / 2; y++) {
@@ -121,16 +130,6 @@ int simulation_run(float dt){
         }
         dt_old=dt;
     }
-    if((simulation_state!=simulation_state_created_and_wait_for_start)&&(simulation_state!=simulation_state_simulate)){
-        printf("Error: Wave packet not initialized, won't start simulation!\n");
-        return 1;
-    }
-    //printf("Paused:? %d\n",simulation_paused);
-    if(simulation_paused){
-
-        return 2;
-    }
-
     //Change to momentum space (same as fourier transform)
     fftw_execute(fft);
     //Complex multiplication of the wave function in the momentum space with the squared momentum propagator e^(1/(i*hbar)*)?? TODO

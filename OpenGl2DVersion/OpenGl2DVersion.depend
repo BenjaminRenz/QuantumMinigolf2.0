@@ -122,3 +122,126 @@
 1555282105 source:c:\users\badmin\desktop\gitprojects\quantumminigolf2.0\opengl2dversion\src\image_analyse.c
 	"image_analyse.h"
 
+1557155544 source:c:\users\pud\documents\github\quantumminigolf2.0\opengl2dversion\src\calibration_mode.c
+	"calibration_mode.h"
+
+1557155544 c:\users\pud\documents\github\quantumminigolf2.0\opengl2dversion\inc\calibration_mode.h
+	"filereader.h"
+	"glew.h"
+	"glfw3.h"
+	"linmath.h"
+	"map_camera_plane.h"
+	"simulation.h"
+	"image_analyse.h"
+	"gl_utils.h"
+	<stdlib.h>
+	<stdio.h>
+
+1557155544 c:\users\pud\documents\github\quantumminigolf2.0\opengl2dversion\inc\filereader.h
+	<stdint.h>
+	<stdio.h>
+
+1557155544 c:\users\pud\documents\github\quantumminigolf2.0\opengl2dversion\libraries\glew_2.1.0\include\glew.h
+	<stddef.h>
+	<inttypes.h>
+	<stdint.h>
+	<inttypes.h>
+	<Availability.h>
+	<OpenGL/glu.h>
+	<GL/glu.h>
+
+1557155544 c:\users\pud\documents\github\quantumminigolf2.0\opengl2dversion\libraries\glfw_3.2.1\include\glfw3.h
+	<stddef.h>
+	<stdint.h>
+	<OpenGL/gl3.h>
+	<OpenGL/gl3ext.h>
+	<OpenGL/gl.h>
+	<OpenGL/glu.h>
+	<GL/glcorearb.h>
+	<GLES/gl.h>
+	<GLES/glext.h>
+	<GLES2/gl2.h>
+	<GLES2/gl2ext.h>
+	<GLES3/gl3.h>
+	<GLES2/gl2ext.h>
+	<GLES3/gl31.h>
+	<GLES2/gl2ext.h>
+	<vulkan/vulkan.h>
+	<GL/gl.h>
+	<GL/glext.h>
+	<GL/glu.h>
+
+1557155544 c:\users\pud\documents\github\quantumminigolf2.0\opengl2dversion\inc\linmath.h
+	<math.h>
+
+1557155544 c:\users\pud\documents\github\quantumminigolf2.0\opengl2dversion\inc\map_camera_plane.h
+	"linmath.h"
+
+1559825027 c:\users\pud\documents\github\quantumminigolf2.0\opengl2dversion\inc\simulation.h
+	"fftw3.h"
+	<stdint.h>
+	<linmath.h>
+
+1557155544 c:\users\pud\documents\github\quantumminigolf2.0\opengl2dversion\libraries\fftw_3.3.5\include\fftw3.h
+	<stdio.h>
+	<stddef.h>
+
+1557155544 c:\users\pud\documents\github\quantumminigolf2.0\opengl2dversion\inc\image_analyse.h
+	"camera_dshow.h"
+
+1557155544 c:\users\pud\documents\github\quantumminigolf2.0\opengl2dversion\inc\camera_dshow.h
+	<dshow.h>
+	<guiddef.h>
+	<stdio.h>
+	<strmif.h>
+	<uchar.h>
+	<stddef.h>
+
+1557155544 c:\users\pud\documents\github\quantumminigolf2.0\opengl2dversion\inc\gl_utils.h
+	"glew.h"
+	"glfw3.h"
+	<stdio.h>
+
+1557155544 source:c:\users\pud\documents\github\quantumminigolf2.0\opengl2dversion\src\camera_dshow.c
+	"camera_dshow.h"
+
+1559821949 source:c:\users\pud\documents\github\quantumminigolf2.0\opengl2dversion\src\filereader.c
+	"filereader.h"
+	<stdlib.h>
+
+1557155544 source:c:\users\pud\documents\github\quantumminigolf2.0\opengl2dversion\src\gl_utils.c
+	"gl_utils.h"
+
+1557155544 source:c:\users\pud\documents\github\quantumminigolf2.0\opengl2dversion\src\image_analyse.c
+	"image_analyse.h"
+
+1557155544 source:c:\users\pud\documents\github\quantumminigolf2.0\opengl2dversion\src\map_camera_plane.c
+	<stdio.h>
+	<math.h>
+	"map_camera_plane.h"
+
+1559825051 source:c:\users\pud\documents\github\quantumminigolf2.0\opengl2dversion\src\simulation.c
+	"simulation.h"
+	<string.h>
+	<math.h>
+	<stdlib.h>
+
+1559824776 source:c:\users\pud\documents\github\quantumminigolf2.0\opengl2dversion\main.c
+	"glew.h"
+	"glfw3.h"
+	"linmath.h"
+	"map_camera_plane.h"
+	"camera_dshow.h"
+	"image_analyse.h"
+	"simulation.h"
+	"filereader.h"
+	"calibration_mode.h"
+	"gl_utils.h"
+	<stdio.h>
+	<stdlib.h>
+	<time.h>
+	<string.h>
+	<dirent.h>
+	<math.h>
+	<limits.h>
+

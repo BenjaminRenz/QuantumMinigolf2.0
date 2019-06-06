@@ -473,6 +473,7 @@ int main(int argc, char* argv[]) {
     glGenTextures(1, &psiTexture);
     glBindTexture(GL_TEXTURE_2D, psiTexture);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -485,8 +486,6 @@ int main(int argc, char* argv[]) {
     drawTrackPoint(G_OBJECT_INIT,0,0.0f,0.0f);
     //end Graphics@@
 
-
-
     //set only once, will start the graph and capture frames
     //float CalibPoints[8]={580.f,880.f, 1200.f,880.f, 1150.f,330.f, 630.f,370.f};
     vec2 BrighspotMapped;
@@ -497,10 +496,8 @@ int main(int argc, char* argv[]) {
     glfwSetScrollCallback(MainWindow, mouse_scroll_callback);
     glfwSetWindowSizeCallback(MainWindow, windows_size_callback);
     glfwSetCursorPosCallback(MainWindow, cursor_pos_callback);
-
-
-    standard_draw();
     drawGui(G_OBJECT_INIT, 0);   //Initialize Gui with GL_OBJECT_INIT,aspect ratio
+    standard_draw(); //Do not move before drawGui(G_OBJECT_INIT,0);
     GUI_refresh();
     while(!glfwWindowShouldClose(MainWindow)) { //Main Programm loop
         simulation_run(dt);
@@ -613,11 +610,11 @@ int main(int argc, char* argv[]) {
         mat4x4_mul(tempTargetCombined,mvp4x4,tempScaleTransMat);
 
 
-        drawTargetBox(G_OBJECT_DRAW,tempTargetCombined,MeasColorBySim);
+        drawTargetBox(G_OBJECT_DRAW,tempTargetCombined,MeasColorBySim); //
         if(track_toggle){
             drawTrackPoint(G_OBJECT_DRAW,mvp4x4,0,0);
         }
-        //drawGui(G_OBJECT_DRAW,0);
+        drawGui(G_OBJECT_DRAW,0);
         //Swap Buffers
         glFinish();
         glfwSwapBuffers(MainWindow);
@@ -1398,9 +1395,9 @@ void drawGui(int G_OBJECT_STATE, float aspectRatio) {
                 GUI_indices[positionInIbo++] = index++; //1
                 GUI_indices[positionInIbo++] = index; //2
                 GUI_indices[positionInIbo++] = index--; //2
-                GUI_indices[positionInIbo++] = index; //1
-                index += 2;
-                GUI_indices[positionInIbo++] = index++; //3
+                GUI_indices[positionInIbo++] = index++; //1
+                GUI_indices[positionInIbo++] = ++index; //3
+                index++;
             }
         }
         glBindBuffer(GL_ARRAY_BUFFER, vboVertexID);
@@ -1657,9 +1654,6 @@ void update_potential(unsigned char* graphic_local_texture){
         SelectedPotential=0;
     }
     GameState=GUI_STATE_BUTTON1_START;
-    GUI_refresh();
-    standard_draw();
-    ColorIntensity=2.9f;
 }
 
 void standard_draw(){
