@@ -1526,7 +1526,7 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
         else if(!track_toggle) track_toggle=1;
     }
     if(key == GLFW_KEY_SPACE && action == GLFW_PRESS){
-        if(GameState==GameStateWaitForMeas){
+        if(GameState==GameStateWaitForStart){
             simulation_unpause();
             GameState = GameStateWaitForMeas;
         }
@@ -1546,10 +1546,7 @@ void Reset(){
 //XYZ
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods) {
     if(button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
-        if(GameState == GameStateWaitForStart) {
-            GameState = GameStateWaitForMeas;
-            return;
-        }else if(GameState == GameStateWaitForMeas) {
+        if(GameState == GameStateWaitForMeas) {
             Measurement();
             return;
         }else if(GameState == GameStateWaitForReset) {
