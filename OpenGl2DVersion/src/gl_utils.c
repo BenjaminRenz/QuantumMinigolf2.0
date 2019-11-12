@@ -1,6 +1,6 @@
 #include "gl_utils.h"
 
-GLuint CompileShaderFromFile(char FilePath[], GLuint shaderType) {
+GLuint CompileShaderFromFile(char* FilePath, GLuint shaderType) {
     //read from file into heap memory
     FILE* filepointer = fopen(FilePath, "rb");               //open specified file in read only mode
     if(filepointer == NULL) {

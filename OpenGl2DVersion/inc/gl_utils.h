@@ -6,6 +6,6 @@
 #include "glfw3.h"
 #include <stdio.h>
 
-GLuint CompileShaderFromFile(char FilePath[], GLuint shaderType);
+GLuint CompileShaderFromFile(char* FilePath, GLuint shaderType);
 
 #endif // GL_UTILS_H_INCLUDED
