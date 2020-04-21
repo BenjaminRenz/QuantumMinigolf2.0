@@ -17,10 +17,11 @@ HRESULT callbackForCam2(void* inst, IMediaSample* smp){
 
 int main(void){
     unsigned int numOfAvailCams=0;
-    struct CameraListItem* CameraLp=getCameras(&numOfAvailCams);
+    struct CameraListItem* CameraLp1=getCameras(&numOfAvailCams);
+    struct CameraListItem* CameraLp2=getCameras(&numOfAvailCams);
     printf("Num of avail cam: %u\n",numOfAvailCams);
-    struct CameraStorageObject* Cam1ResP=getAvailableCameraResolutions(CameraLp[0]);
-    struct CameraStorageObject* Cam2ResP=getAvailableCameraResolutions(CameraLp[1]);
+    struct CameraStorageObject* Cam1ResP=getAvailableCameraResolutions(CameraLp1[0]);
+    struct CameraStorageObject* Cam2ResP=getAvailableCameraResolutions(CameraLp2[1]);
     registerCameraCallback(Cam1ResP,0,&callbackForCam1);
     registerCameraCallback(Cam2ResP,0,&callbackForCam2);
     Cam1ResP->_MediaControlP->lpVtbl->Run(Cam1ResP->_MediaControlP);
