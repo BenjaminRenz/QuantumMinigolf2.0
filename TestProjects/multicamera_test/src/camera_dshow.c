@@ -1,4 +1,11 @@
 #include "camera_dshow.h"
+#include "Debug/Debug.h"
+//hack to still use SampleGrabber
+extern GUID CLSID_SampleGrabber;
+//const CLSID CLSID_SampleGrabber = { 0xC1F400A0, 0x3F08, 0x11d3, { 0x9F, 0x0B, 0x00, 0x60, 0x08, 0x03, 0x9E, 0x37 } };
+//const IID IID_ISampleGrabber = { 0x6B652FFF, 0x11FE, 0x4fce, { 0x92, 0xAD, 0x02, 0x66, 0xB5, 0xD7, 0xC7, 0x8F } };
+const CLSID CLSID_NullRenderer = { 0xC1F400A4, 0x3F08, 0x11d3, { 0x9F, 0x0B, 0x00, 0x60, 0x08, 0x03, 0x9E, 0x37 } };
+
 
 void closeCamera(struct CameraStorageObject* Camera){
     Camera->_MediaControlP->lpVtbl->Stop(Camera->_MediaControlP);
@@ -25,25 +32,26 @@ void closeCamera(struct CameraStorageObject* Camera){
 struct CameraListItem* getCameras(unsigned int* numberOfCameras)
 {
     HRESULT hr=0;
-    hr=CoInitializeEx(NULL,COINIT_MULTITHREADED);
-    if(hr!=S_OK)
-    {
-        printf("Error: Com library could not be initialized!\n");
-        return 0;
+
+    //Initialize Com library
+    if(S_OK!=CoInitializeEx(NULL,COINIT_MULTITHREADED)){
+        dprintf(DBGT_ERROR,"Com library could not be initialized");
+        return NULL;
     }
-    printf("Info: Successfully initialized COM library\n");
+
+    //create DeviceEnumerator
     ICreateDevEnum* myDeviceEnum=NULL;
     if(S_OK!=CoCreateInstance(&CLSID_SystemDeviceEnum,NULL,CLSCTX_INPROC,&IID_ICreateDevEnum,(void **)&myDeviceEnum)){
-        return 0;
+        dprintf(DBGT_ERROR,"failed to create DeviceEnumerator");
+        return NULL;
     }
-    else{
-        printf("Info: Successfully created DeviceEnumerator\n");
-    }
+
+    //create ClassEnumerator
     IEnumMoniker* myCameralist=NULL;
     if(S_OK!=myDeviceEnum->lpVtbl->CreateClassEnumerator(myDeviceEnum,&CLSID_VideoInputDeviceCategory, &myCameralist, 0)){
         numberOfCameras=0;
-        printf("No camera found!\n");
-        return 0;
+        dprintf(DBGT_ERROR,"No camera found!\n");
+        return NULL;
     }
 
     //Release the DeviceEnumerator after we have retrieved all available Video Devices
@@ -53,7 +61,9 @@ struct CameraListItem* getCameras(unsigned int* numberOfCameras)
         printf("Error: Could not release VideoDevice!\n");
         return 0;
     }*/
-    printf("Info: Successfully created VideoInputEnumerator\n");
+
+
+
     IMoniker* myCamera=NULL;
     struct CameraListItem* CameraListItemp=NULL;        //create a pointer for the CameraIdentifier-structs we wish to alloacate
     while(S_OK==myCameralist->lpVtbl->Next(myCameralist,1,&myCamera,NULL))
@@ -85,35 +95,55 @@ struct CameraListItem* getCameras(unsigned int* numberOfCameras)
     return CameraListItemp;
 }
 
-struct CameraStorageObject* getAvailableCameraResolutions(struct CameraListItem CameraIn)
-{
+struct CameraStorageObject* getAvailableCameraResolutions(struct CameraListItem CameraIn){
+
     struct CameraStorageObject* CameraOut=(struct CameraStorageObject*) malloc(sizeof(struct CameraStorageObject));
 
-    //Create Graph and Filter
-    //Instantiate Graph to get access to FilterObjects
+    //Create Graph and Filters
+    //Create Graph
     CameraOut->_CameraGraphP=NULL;
-    CoCreateInstance(&CLSID_FilterGraph,NULL,CLSCTX_INPROC,&IID_IGraphBuilder,(void **)&CameraOut->_CameraGraphP);
+    if(S_OK!=CoCreateInstance(&CLSID_FilterGraph,NULL,CLSCTX_INPROC,&IID_IGraphBuilder,(void **)&CameraOut->_CameraGraphP)){
+        dprintf(DBGT_ERROR,"Creating DirectShow graph failed");
+        return NULL;
+    }
+
     //Create Control for Graph
     CameraOut->_MediaControlP=NULL;
-    CameraOut->_CameraGraphP->lpVtbl->QueryInterface(CameraOut->_CameraGraphP,&IID_IMediaControl,(void**)&CameraOut->_MediaControlP);
-    //Create Filter
+    if(S_OK!=CameraOut->_CameraGraphP->lpVtbl->QueryInterface(CameraOut->_CameraGraphP,&IID_IMediaControl,(void**)&CameraOut->_MediaControlP)){
+        dprintf(DBGT_ERROR,"Getting Control for Graph failed");
+        return NULL;
+    }
+
+    //Create Camera Source Filter
     IBaseFilter* CameraFilter=NULL;
     IBindCtx* myBindContext=NULL;
-    CreateBindCtx(0,&myBindContext);            //TODO free? unbind?
+    CreateBindCtx(0,&myBindContext);            //TODO delete test!!!!!!!! free? unbind?
     CameraIn.MonikerPointer->lpVtbl->BindToObject(CameraIn.MonikerPointer,NULL,NULL,&IID_IBaseFilter,(void **)&CameraFilter); //Do not swap this and the line below, it will not work!
-    CameraOut->_CameraGraphP->lpVtbl->AddFilter(CameraOut->_CameraGraphP, CameraFilter, L"Capture Source");
-    IEnumPins* CameraOutputPins=0;
-    CameraFilter->lpVtbl->EnumPins(CameraFilter,&CameraOutputPins);
+    if(S_OK!=CameraOut->_CameraGraphP->lpVtbl->AddFilter(CameraOut->_CameraGraphP, CameraFilter, L"Capture Source")){
+        dprintf(DBGT_ERROR,"Could not add CaptureSource Filter to graph");
+        return NULL;
+    }
 
-    //
-    printf("Experimental feature\n");
+    //get CameraControl for hardware exposure adjustment
     IAMCameraControl *pCameraControl=0;
-    CameraFilter->lpVtbl->QueryInterface(CameraFilter,&IID_IAMCameraControl,(void **)&pCameraControl);
-
+    if(S_OK!=CameraFilter->lpVtbl->QueryInterface(CameraFilter,&IID_IAMCameraControl,(void **)&pCameraControl)){
+        dprintf(DBGT_ERROR,"Could not querry CameraControl");
+        return NULL;
+    }
     CameraOut->_CameraControlP=pCameraControl;
 
+    //get first free output pin of CameraFilter
+    IEnumPins* CamOutPinsEnump=0;
+    if(S_OK!=CameraFilter->lpVtbl->EnumPins(CameraFilter,&CamOutPinsEnump)){
+        dprintf(DBGT_ERROR,"Can't create enum for pins of CameraFilter");
+        return NULL;
+    }
+    //TODO WIP
+    while(CamOutPinsEnump->lpVtbl->next(CamOutPinsEnump,))
 
-    //get output pin of CameraInputFilter
+
+    //TODO REMOVE code below
+    IEnumPins
     IPin* pOutputPin=(IPin*) malloc(sizeof(IPin));
     CameraOutputPins->lpVtbl->Next(CameraOutputPins,1,&pOutputPin,0);
     CameraOut->_outputpinP=pOutputPin;
@@ -184,10 +214,9 @@ struct CameraStorageObject* getAvailableCameraResolutions(struct CameraListItem 
     return CameraOut;
 }
 
-int registerCameraCallback(struct CameraStorageObject* CameraIn,int selectedResolution,HRESULT (*callbackForGraphviewFuncPointer) (void*, IMediaSample*) ) //selected resolution is position in array
+int registerCameraCallback(struct CameraStorageObject* CameraIn,int selectedResolution,HRESULT (*callbackFuncp) (void*, IMediaSample*) ) //selected resolution is position in array
 {
-    DWORD no;
-    INT_PTR* p=NULL; //will be pointer to the input function of the render filter
+    //Setup user selected format of CaptureSource Filter Stream
     CameraIn->_StreamCfgP->lpVtbl->SetFormat(CameraIn->_StreamCfgP,(CameraIn->_amMediaArrayP[selectedResolution]));
     //Free unused formats
     for(int formatIter=0; formatIter<CameraIn->numberOfSupportedResolutions; formatIter++)
@@ -205,34 +234,74 @@ int registerCameraCallback(struct CameraStorageObject* CameraIn,int selectedReso
             printf("Info: Free unused Format\n");
         }
     }
-    CameraIn->_CameraGraphP->lpVtbl->Render(CameraIn->_CameraGraphP,CameraIn->_outputpinP); //Render this output
-    //get renderPin and hijack the method which recieves the inputdata from the last filter in the graph
-    IEnumFilters* myFilter=NULL;
-    CameraIn->_CameraGraphP->lpVtbl->EnumFilters(CameraIn->_CameraGraphP,&myFilter);//OK
-    IBaseFilter* rnd=NULL;
-    myFilter->lpVtbl->Next(myFilter,1,&rnd,0);//Does not work, no filter recieved
-    IEnumPins* myRenderPins=0;
-    rnd->lpVtbl->EnumPins(rnd,&myRenderPins);
-    IPin* myRenderPin=0;
-    myRenderPins->lpVtbl->Next(myRenderPins,1,&myRenderPin, 0);
-    IMemInputPin* myMemoryInputPin=NULL;
-    myRenderPin->lpVtbl->QueryInterface(myRenderPin,&IID_IMemInputPin,(void**)&myMemoryInputPin);
-    p=6+*(INT_PTR**)myMemoryInputPin; //Get the function pointer for Recieve() of myRenderPin which we will use later to "inject" out own function pointer to redirect the output of the previous filter
-    //printf("Debug: callback address location: %llux\n",(uint64_t)p);
-    //printf("Debug: address before change: %llux\n",(uint64_t)*p);
-    VirtualProtect(p,4,PAGE_EXECUTE_READWRITE,&no);//To allow the write from our thread because the graph lives in a separate thread
-    //Hide the (now empty/black) popup window
-    IVideoWindow* myVideoWindow=NULL;
-    CameraIn->_CameraGraphP->lpVtbl->QueryInterface(CameraIn->_CameraGraphP,&IID_IVideoWindow,(void*)&myVideoWindow);
-    CameraIn->_MediaControlP->lpVtbl->Pause(CameraIn->_MediaControlP); //do this to make return of run dependent on if the camera is already in use
-    if(S_OK!=CameraIn->_MediaControlP->lpVtbl->Run(CameraIn->_MediaControlP)){
-        printf("Alert camera already in use abort!\n");
-        return S_FALSE;
-    }else{
-        printf("Debug: Camera not in use, continue\n");
+
+    //Add a SampleGrabberFilter
+    IBaseFilter* SampleGrabberFp=NULL;
+    if(S_OK!=CoCreateInstance(&CLSID_SampleGrabber, NULL, CLSCTX_INPROC_SERVER, &IID_IBaseFilter, (void**)&SampleGrabberFp)){
+        dprintf(DBGT_ERROR,"Could not create SampleGrabber Filter");
+        return 1;
     }
-    myVideoWindow->lpVtbl->put_Visible(myVideoWindow,0);
-    *p=(INT_PTR)callbackForGraphviewFuncPointer;
-    //printf("Debug: address after change: %lx\n",*p);
+    if(S_OK!=CameraOut->_CameraGraphP->lpVtbl->AddFilter(CameraOut->_CameraGraphP, SampleGrabberFp,L"Sample Grabber")){
+        dprintf(DBGT_ERROR,"Could not attach SampleGrabber to graph");
+        return 1;
+    }
+
+    //Querry the interface of the SampleGrabberFilter
+    ISampleGrabber* SampleGrabberp=NULL;
+    if(S_OK!=SampleGrabberFp->lpVtbl->QueryInterface(SampleGrabberFp,&IID_ISampleGrabber,(void**)SampleGrabberp)){
+        dprintf(DBGT_ERROR,"Could not querry interface of SampleGrabber");
+        return 1;
+    }
+
+    //setup MediaType of SampleGrabber, so that the autoconnect creates the neccesary decoding filters
+    AM_MEDIA_TYPE tempMT;
+    memset(&tempMT,0,sizeof(AM_MEDIA_TYPE));
+    tempMT.majortype = MEDIATYPE_Video;
+    tempMT.subtype = MEDIASUBTYPE_RGB24;    //for RGB with 8 bits per color and 24 bits per pixel
+    if(S_OK!=SampleGrabberp->lpVtbl->SetMediaType(SampleGrabberp,&tempMT)){
+        dprintf(DBGT_ERROR,"Could not set mediatype of SampleGrabber");
+        return 1;
+    }
+
+    //Connect CameraSource and SampleGrabber with decoder in between
+
+    //TODO something is missing here
+    IPin* CameraOutPinp=NULL;
+    IPin* SampleGrabberFInPinP=NULL;
+    if(S_OK!=FindUnconnectedPin(SampleGrabberFp,PINDIR_INPUT,&SampleGrabberFInPinP)){
+        dprintf(DBGT_ERROR,"Could not find an unconnected input pin on SampleGrabber Filter");
+        return 1;
+    }
+    if(S_OK!=CameraIn->_CameraGraphP->lpVtbl->Connect(CameraIn->_CameraGraphP,CameraOutPinp,SampleGrabberFInPinP)){
+        dprintf(DBGT_ERROR,"Could not connect Camera and Sample Grabber");
+        return 1;
+    }
+
+    //Create Null Renderer
+    IBaseFilter* NullRendFp=NULL;
+    CoCreateInstance(&CLSID_NullRenderer, NULL, CLSCTX_INPROC_SERVER, &IID_IBaseFilter, (void**)&NullRendFp);
+    CameraOut->_CameraGraphP->lpVtbl->AddFilter(CameraOut->_CameraGraphP,NullRendFp,L"Null Filter");
+
+    //Connect SampleGrabber output to null renderer
+    IPin* NullRendFInPinP=NULL;
+    if(S_OK!=FindUnconnectedPin(NullRendFInPinP,PINDIR_INPUT,&NullRendFp)){
+        dprintf(DBGT_ERROR;"Could not find an unconnected input pin on NullRenderer Filter");
+        return 1;
+    }
+    if(S_OK!=CameraIn->_CameraGraphP->lpVtbl->Connect(CameraIn->_CameraGraphP,CameraOutPinp,SampleGrabberFInPinP)){
+        dprintf(DBGT_ERROR,"Could not connect SampleGrabber and NullRenderer");
+        return 1;
+    }
+
+    //Free all querried Pins
+    SampleGrabberFInPinP->lpVtbl->release(SampleGrabberFInPinP);
+    NullRendFInPinP->lpVtbl->release(NullRendFInPinP);
+
+    //Setup callback of SampleGrabber
+    if(S_OK!=SampleGrabberp->lpVtbl->SetCallback(SampleGrabberp,callbackFuncp,1)){ //1 stands for giving the called function an pointer to the buffer storing the media sample
+        dprintf(DBGT_ERROR,"Error while setting callback of sampleGrabber");
+        return 1;
+    }
+    dprintf(DBGT_INFO,"Sucessfully registered Callback");
     return S_OK;
 }

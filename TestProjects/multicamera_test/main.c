@@ -21,11 +21,15 @@ int main(void){
     printf("Num of avail cam: %u\n",numOfAvailCams);
     struct CameraStorageObject* Cam1ResP=getAvailableCameraResolutions(CameraLp[0]);
     struct CameraStorageObject* Cam2ResP=getAvailableCameraResolutions(CameraLp[1]);
-    registerCameraCallback(Cam1ResP,0,&callbackForCam1);
-    registerCameraCallback(Cam2ResP,0,&callbackForCam2);
-    Cam1ResP->_MediaControlP->lpVtbl->Run(Cam1ResP->_MediaControlP);
-    Cam2ResP->_MediaControlP->lpVtbl->Run(Cam2ResP->_MediaControlP);
 
+        printf("Here42\n");
+        registerCameraCallback(Cam1ResP,0,&callbackForCam1);
+    registerCameraCallback(Cam2ResP,0,&callbackForCam2);
+    printf("Here\n");
+    Cam1ResP->_MediaControlP->lpVtbl->Run(Cam1ResP->_MediaControlP);
+
+    Sleep(10);
+Cam2ResP->_MediaControlP->lpVtbl->Run(Cam2ResP->_MediaControlP);
     while(1){
 
     }

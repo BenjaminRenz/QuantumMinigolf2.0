@@ -1,16 +1,17 @@
 # depslib dependency file v1.0
-1586829679 source:c:\portableprogramms\gitprojects\quantumminigolf2.0\testprojects\multicamera_test\main.c
+1587517163 source:c:\portableprogramms\gitprojects\quantumminigolf2.0\testprojects\multicamera_test\main.c
 	<stdio.h>
 	"camera_dshow.h"
 
-1586826517 c:\portableprogramms\gitprojects\quantumminigolf2.0\testprojects\multicamera_test\inc\camera_dshow.h
+1591164825 c:\portableprogramms\gitprojects\quantumminigolf2.0\testprojects\multicamera_test\inc\camera_dshow.h
 	<dshow.h>
 	<guiddef.h>
+	<qedit.h>
 	<stdio.h>
 	<strmif.h>
 	<uchar.h>
 	<stddef.h>
 
-1586829547 source:c:\portableprogramms\gitprojects\quantumminigolf2.0\testprojects\multicamera_test\src\camera_dshow.c
+1591165160 source:c:\portableprogramms\gitprojects\quantumminigolf2.0\testprojects\multicamera_test\src\camera_dshow.c
 	"camera_dshow.h"
 
