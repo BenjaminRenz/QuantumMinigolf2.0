@@ -142,6 +142,7 @@ int simulation_run(float dt){
     //Change back to position space
     fftw_execute(ifft);
     //apply the potential part of the Hamilton operator
+    //propagator is e^(i*V(x)*t)
     for(int i = 0; i < sim_res_total; i++) {
         double psi_re_temp = psi[i][0];
         psi[i][0] = psi_re_temp * cos(potential[i]) - psi[i][1] * sin(potential[i]);

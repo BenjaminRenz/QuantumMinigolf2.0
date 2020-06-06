@@ -1,0 +1,10 @@
+ToDo QMG2.0
+-startup menu to select cameras
+-two cameras to pixel array
+-radial camera fix
+-(multithreading)
+-predictor for brightspot
+-6 point 3d pos finder
+->fft to gpu
+-2d 3d switch
+-gui (scenes and menu?)
