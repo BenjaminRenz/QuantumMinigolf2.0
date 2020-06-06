@@ -97,6 +97,7 @@ struct CameraListItem* getCameras(unsigned int* numberOfCameras)
 
 struct CameraStorageObject* getAvailableCameraResolutions(struct CameraListItem CameraIn){
 
+    HRESULT hr;
     struct CameraStorageObject* CameraOut=(struct CameraStorageObject*) malloc(sizeof(struct CameraStorageObject));
 
     //Create Graph and Filters
@@ -138,19 +139,31 @@ struct CameraStorageObject* getAvailableCameraResolutions(struct CameraListItem 
         dprintf(DBGT_ERROR,"Can't create enum for pins of CameraFilter");
         return NULL;
     }
-    //TODO WIP
-    while(CamOutPinsEnump->lpVtbl->next(CamOutPinsEnump,))
+    IPin* CamOutPinp;
+    while(S_OK == (hr=CamOutPinsEnump->lpVtbl->Next(CamOutPinsEnump,1,&CamOutPinp,NULL))){  //1 stands for "only recieve 1 pin ata a time"
+        PIN_DIRECTION PinDir;
+        if(S_OK!=CamOutPinp->lpVtbl->QueryDirection(&PinDir)){
+            dprintf(DBGT_ERROR,"Could not querry pin direction of Camera pin");
+            CamOutPinp->lpVtbl->release(CamOutPinp);
+            CamOutPinsEnump->lpVtbl->release(CamOutPinsEnump);
+            return NULL;
+        }
+        if(PinDir==PINDIR_OUTPUT){
+            CamOutPinsEnump->lpVtbl->release(CamOutPinsEnump);
+            break;
+        }
+        CamOutPinp->lpVtbl->release(CamOutPinp);    //release Pinp for next cycle of while loop
+    }
+    if(hr!=S_OK){//Check if the search was unsucessfull and the while loop exited because hr was not equal to S_OK
+        dprintf(DBGT_ERROR,"Could not find any output pin");
+        CamOutPinsEnump->lpVtbl->release(CamOutPinsEnump);
+        return NULL;
+    }
 
-
-    //TODO REMOVE code below
-    IEnumPins
-    IPin* pOutputPin=(IPin*) malloc(sizeof(IPin));
-    CameraOutputPins->lpVtbl->Next(CameraOutputPins,1,&pOutputPin,0);
-    CameraOut->_outputpinP=pOutputPin;
     //Get Resolution
     //get pin configuration-interface
     IAMStreamConfig* StreamCfg=(IAMStreamConfig*)malloc(sizeof(IAMStreamConfig));
-    pOutputPin->lpVtbl->QueryInterface(pOutputPin,&IID_IAMStreamConfig, (void**) &StreamCfg);
+    CamOutPinp->lpVtbl->QueryInterface(CamOutPinp,&IID_IAMStreamConfig, (void**) &StreamCfg);
     CameraOut->_StreamCfgP=StreamCfg;
     //Get size of config-structure for pin
     int numberOfPossibleRes=0;
