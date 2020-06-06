@@ -4,6 +4,7 @@
 
 #include <dshow.h>
 #include <guiddef.h>
+#include <qedit.h>  //For sample grabber
 #include <stdio.h>
 #include <strmif.h>
 #include <uchar.h>
@@ -32,7 +33,7 @@ struct CameraStorageObject
     IGraphBuilder* _CameraGraphP;
     IMediaControl* _MediaControlP;
     IAMCameraControl* _CameraControlP;
-    unsigned int numberOfSupportedResolutions;
+    unsigned int numberOfSupportedResolutions; //(maximum value of resolutionNum)+1, see one line below
     unsigned int** resolutionsXYarrayP;  //treat as if it would be a 2d array e.g.: resolutionsXYPointer[resolutionNum][0] for width ... [width=0,height=1]
     AM_MEDIA_TYPE** _amMediaArrayP;
     IAMStreamConfig* _StreamCfgP;
