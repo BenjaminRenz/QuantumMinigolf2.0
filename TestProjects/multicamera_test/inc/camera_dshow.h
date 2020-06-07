@@ -30,14 +30,14 @@ struct CameraStorageObject
     IMoniker* MonikerP;
     char32_t friendlyName[30];
     char32_t devicePath[200];
-    IGraphBuilder* _CameraGraphP;
+    IGraphBuilder* _GraphP;
     IMediaControl* _MediaControlP;
     IAMCameraControl* _CameraControlP;
     unsigned int numberOfSupportedResolutions; //(maximum value of resolutionNum)+1, see one line below
     unsigned int** resolutionsXYarrayP;  //treat as if it would be a 2d array e.g.: resolutionsXYPointer[resolutionNum][0] for width ... [width=0,height=1]
     AM_MEDIA_TYPE** _amMediaArrayP;
     IAMStreamConfig* _StreamCfgP;
-    IPin* _outputpinP;
+    IBaseFilter* _camFilterP;
 };
 
 /* This function shall be called with a NULL pointer to initialize and return all available cameras as structs. The user then should pick one camera and
@@ -56,5 +56,5 @@ struct CameraListItem* getCameras(unsigned int* numberOfCameras);
 
 
 struct CameraStorageObject* getAvailableCameraResolutions(struct CameraListItem CameraIn);
-int registerCameraCallback(struct CameraStorageObject* CameraIn,int selectedResolution,HRESULT (*callbackForGraphviewFuncPointer) (void*, IMediaSample*) );  //selected resolution is position in array
+int registerCameraCallback(struct CameraStorageObject* CameraIn,int selectedResolution,ISampleGrabberCB (*callbackForGraphviewFuncPointer) (void*, IMediaSample*) );  //selected resolution is position in array
 #endif

@@ -27,6 +27,13 @@ int main(void){
     printf("Here\n");
     Cam1ResP->_MediaControlP->lpVtbl->Run(Cam1ResP->_MediaControlP);
 
+    //TODO function callback needs fixing see;
+    //https://docs.microsoft.com/de-de/office/client-developer/outlook/mapi/implementing-iunknown-in-c
+    //https://www.c-plusplus.net/forum/topic/284559/isamplegrabber-setcallback-eigene-funktion-%C3%BCbergeben/6
+    //https://stackoverflow.com/questions/16562479/isamplegrabber-callback-method-code-works-but-might-need-some-love
+    //https://docs.microsoft.com/en-us/windows/win32/directshow/isamplegrabber-setcallback
+    //http://doc.51windows.net/Directx9_SDK/htm/isamplegrabbercbinterface.htm
+
     Sleep(10);
 	Cam2ResP->_MediaControlP->lpVtbl->Run(Cam2ResP->_MediaControlP);
     while(1){
