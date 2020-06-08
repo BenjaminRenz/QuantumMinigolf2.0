@@ -43,6 +43,8 @@ struct CameraStorageObject
 
 /* This function shall be called with a NULL pointer to initialize and return all available cameras as structs. The user then should pick one camera and
 deallocate other cameras witch have not been selected*/
+struct SampleGrabberCB_iface;
+HRESULT SaveGraphFile(IGraphBuilder *pGraph, WCHAR *wszPath);
 void closeCamera(struct CameraStorageObject* Camera);
 HRESULT callbackForGraphview(void* inst, IMediaSample* smp);
 HRESULT (*callbackForGraphviewFPointer)(void* inst, IMediaSample* smp); //create a function pointer which we will to inject our custom function into the RenderPinObject
@@ -57,5 +59,5 @@ struct CameraListItem* getCameras(unsigned int* numberOfCameras);
 
 
 struct CameraStorageObject* getAvailableCameraResolutions(struct CameraListItem CameraIn);
-int registerCameraCallback(struct CameraStorageObject* CameraIn,int selectedResolution,long (*CBFunp)(double SampleTime,unsigned char *pBuffer,long BufferLen));  //selected resolution is position in array
+int registerCameraCallback(struct CameraStorageObject* CameraIn,int selectedResolution,long (*CBFunp)(struct SampleGrabberCB_iface* this, double SampleTime, IMediaSample* Samplep));
 #endif

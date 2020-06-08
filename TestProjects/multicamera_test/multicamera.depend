@@ -17,11 +17,11 @@
 	"camera_dshow.h"
 	"Debug/Debug.h"
 
-1591498778 source:c:\users\badmin\desktop\gitprojects\quantumminigolf2.0\testprojects\multicamera_test\main.c
+1591634116 source:c:\users\badmin\desktop\gitprojects\quantumminigolf2.0\testprojects\multicamera_test\main.c
 	<stdio.h>
 	"camera_dshow.h"
 
-1591565685 c:\users\badmin\desktop\gitprojects\quantumminigolf2.0\testprojects\multicamera_test\inc\camera_dshow.h
+1591634177 c:\users\badmin\desktop\gitprojects\quantumminigolf2.0\testprojects\multicamera_test\inc\camera_dshow.h
 	<dshow.h>
 	<guiddef.h>
 	<winnt.h>
@@ -31,9 +31,13 @@
 	<uchar.h>
 	<stddef.h>
 
-1587499627 source:c:\users\badmin\desktop\gitprojects\quantumminigolf2.0\testprojects\multicamera_test\src\camera_dshow.c
+1591634168 source:c:\users\badmin\desktop\gitprojects\quantumminigolf2.0\testprojects\multicamera_test\src\camera_dshow.c
 	"camera_dshow.h"
+	"Debug/Debug.h"
 
 1591313608 c:\portableprogramms\gitprojects\quantumminigolf2.0\testprojects\multicamera_test\inc\debug\debug.h
+	<stdio.h>
+
+1591473056 c:\users\badmin\desktop\gitprojects\quantumminigolf2.0\testprojects\multicamera_test\inc\debug\debug.h
 	<stdio.h>
 

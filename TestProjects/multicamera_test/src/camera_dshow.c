@@ -7,6 +7,47 @@ extern CLSID CLSID_NullRenderer;
 //const IID IID_ISampleGrabber = { 0x6B652FFF, 0x11FE, 0x4fce, { 0x92, 0xAD, 0x02, 0x66, 0xB5, 0xD7, 0xC7, 0x8F } };
 //const CLSID CLSID_NullRenderer = { 0xC1F400A4, 0x3F08, 0x11d3, { 0x9F, 0x0B, 0x00, 0x60, 0x08, 0x03, 0x9E, 0x37 } };
 
+
+HRESULT SaveGraphFile(IGraphBuilder *pGraph, WCHAR *wszPath)
+{
+    const WCHAR wszStreamName[] = L"ActiveMovieGraph";
+    HRESULT hr;
+
+    IStorage *pStorage = NULL;
+    hr = StgCreateDocfile(
+        wszPath,
+        STGM_CREATE | STGM_TRANSACTED | STGM_READWRITE | STGM_SHARE_EXCLUSIVE,
+        0, &pStorage);
+    if(FAILED(hr))
+    {
+        return hr;
+    }
+
+    IStream *pStream;
+    hr = pStorage->lpVtbl->CreateStream(
+        pStorage,
+        wszStreamName,
+        STGM_WRITE | STGM_CREATE | STGM_SHARE_EXCLUSIVE,
+        0, 0, &pStream);
+    if (FAILED(hr))
+    {
+        pStorage->lpVtbl->Release(pStorage);
+        return hr;
+    }
+
+    IPersistStream *pPersist = NULL;
+    pGraph->lpVtbl->QueryInterface(pGraph,&IID_IPersistStream, (void**)&pPersist);
+    hr = pPersist->lpVtbl->Save(pPersist,pStream, TRUE);
+    pStream->lpVtbl->Release(pStream);
+    pPersist->lpVtbl->Release(pPersist);
+    if (SUCCEEDED(hr))
+    {
+        hr = pStorage->lpVtbl->Commit(pStorage,STGC_DEFAULT);
+    }
+    pStorage->lpVtbl->Release(pStorage);
+    return hr;
+}
+
 HRESULT FindFirstUnconnectedPin(IBaseFilter* Filter,PIN_DIRECTION WantedPinDir,IPin** ReturnFilterPinpp){
     HRESULT hr=S_OK;
     //get first free output pin of CameraFilter
@@ -64,37 +105,31 @@ void closeCamera(struct CameraStorageObject* Camera){
 //see: https://www.codeproject.com/Articles/13601/COM-in-plain-C
 
 //Define sample IGrabberCB object
-ULONG WINAPI IUNKN_AddRef(IGlobalInterfaceTable* this);
-ULONG WINAPI IUNKN_Release(IGlobalInterfaceTable* this);
-HRESULT IUNKN_QueryInterface(IGlobalInterfaceTable* this, REFIID riid, LPVOID* lppvObj);
+ULONG WINAPI STDMETHODCALLTYPE  IUNKN_AddRef(IGlobalInterfaceTable* this);
+ULONG WINAPI STDMETHODCALLTYPE  IUNKN_Release(IGlobalInterfaceTable* this);
+HRESULT STDMETHODCALLTYPE IUNKN_QueryInterface(IGlobalInterfaceTable* this, REFIID riid, LPVOID* lppvObj);
 
-
-struct SampleGrabberCB_iface_struct{
+struct SampleGrabberCB_iface{
     struct SampleGrabberCB_lpVtbl* lpVtbl;
     ULONG ref;      //reference count, works like smart pointer
 };
 
-ULONG WINAPI IUNKN_SG_AddRef(IGlobalInterfaceTable* this){
-    struct SampleGrabberCB_iface_struct* self=(struct SampleGrabberCB_iface_struct*) this;
-    InterlockedIncrement(&(self->ref));
-    return self->ref;
-}
-ULONG WINAPI IUNKN_SG_Release(IGlobalInterfaceTable* this){
-    struct SampleGrabberCB_iface_struct* self=(struct SampleGrabberCB_iface_struct*) this;
-    InterlockedDecrement(&(self->ref));
-    if(self->ref==0){
-        free(self);
-        dprintf(DBGT_INFO,"TODO tell the outside world that the interface has been dealocated");
-    }
-    return self->ref;
-}
+struct SampleGrabberCB_lpVtbl{
+    HRESULT STDMETHODCALLTYPE (*QueryInterface)(struct SampleGrabberCB_iface* this, REFIID riid, LPVOID* lppvObj);
+    ULONG   STDMETHODCALLTYPE (*AddRef)        (struct SampleGrabberCB_iface* this);
+    ULONG   STDMETHODCALLTYPE (*Release)       (struct SampleGrabberCB_iface* this);
+    HRESULT STDMETHODCALLTYPE (*SampleCB)      (struct SampleGrabberCB_iface* this, double SampleTime, IMediaSample* Samplep);
+    HRESULT STDMETHODCALLTYPE (*BufferCB)      (struct SampleGrabberCB_iface* this, double SampleTime, unsigned char* Bufferp, long BufferLen);
+};
 
-HRESULT IUNKN_SG_QueryInterface(IGlobalInterfaceTable* this, REFIID riid, LPVOID* lppvObj){
+HRESULT SG_QueryInterface(struct SampleGrabberCB_iface* this, REFIID riid, LPVOID* lppvObj){
     HRESULT hr = S_OK;
     // check for nullptrs
-    if (!this || !lppvObj){
-        hr = ResultFromScode(E_INVALIDARG);
-        return hr;
+    if(!this){
+        return ResultFromScode(E_INVALIDARG);
+    }
+    if(!lppvObj){
+        return ResultFromScode(E_INVALIDARG);
     }
     *lppvObj = NULL;
     // the interface is supported, increment the reference count and return
@@ -103,18 +138,29 @@ HRESULT IUNKN_SG_QueryInterface(IGlobalInterfaceTable* this, REFIID riid, LPVOID
     return hr;
 }
 
+ULONG WINAPI SG_AddRef(struct SampleGrabberCB_iface* this){
+    InterlockedIncrement(&(this->ref));
+    return this->ref;
+}
+ULONG WINAPI SG_Release(struct SampleGrabberCB_iface* this){
+    InterlockedDecrement(&(this->ref));
+    if(this->ref==0){
+        free(this);
+        dprintf(DBGT_INFO,"TODO tell the outside world that the interface has been dealocated");
+    }
+    return this->ref;
+}
 
 
-
-
-void* create_ISampleGrabberCB(long (*CBFunp)(double SampleTime,unsigned char *pBuffer,long BufferLen)){
-    struct SampleGrabberCB_iface_struct* objp=(struct SampleGrabberCB_iface_struct*)malloc(sizeof(struct SampleGrabberCB_iface_struct));
-    IGlobalInterfaceTableVtbl* lpVtbl=(IGlobalInterfaceTableVtbl*)malloc(sizeof(IGlobalInterfaceTableVtbl));
-    IGlobalInterfaceTableVtbl temp={&IUNKN_SG_QueryInterface,&IUNKN_SG_AddRef,&IUNKN_SG_Release,CBFunp};
-    (*lpVtbl)=temp;
-    //SampleGrabberCB methods
-    objp->lpVtbl=lpVtbl;
-    return (void*)objp;
+ISampleGrabberCB* create_ISampleGrabberCB(long (*CBFunp)(struct SampleGrabberCB_iface* this,double SampleTime, IMediaSample* Samplep)){//,unsigned char *pBuffer,long BufferLen)){
+    struct SampleGrabberCB_lpVtbl* lpVtbl_SGCBp=(struct SampleGrabberCB_lpVtbl*)malloc(sizeof(struct SampleGrabberCB_lpVtbl));
+    struct SampleGrabberCB_iface* SampleGrabber_ifacep=(struct SampleGrabberCB_iface*)malloc(sizeof(struct SampleGrabberCB_iface));
+    //Asign lpVtbl to object (SampleGrabber_ifacep)
+    SampleGrabber_ifacep->lpVtbl=lpVtbl_SGCBp;
+    //Fill lpVtbl with out custom functions
+    struct SampleGrabberCB_lpVtbl tempStruct={SG_QueryInterface,SG_AddRef,SG_Release,CBFunp,0};
+    *lpVtbl_SGCBp=tempStruct;
+    return (ISampleGrabberCB*)SampleGrabber_ifacep;
 };
 
 struct CameraListItem* getCameras(unsigned int* numberOfCameras)
@@ -296,7 +342,7 @@ struct CameraStorageObject* getAvailableCameraResolutions(struct CameraListItem 
 }
 
 //CBFun
-int registerCameraCallback(struct CameraStorageObject* CameraIn,int selectedResolution,long (*CBFunp)(double SampleTime,unsigned char *pBuffer,long BufferLen)){ //selected resolution is position in array
+int registerCameraCallback(struct CameraStorageObject* CameraIn,int selectedResolution,long (*CBFunp)(struct SampleGrabberCB_iface* this,double SampleTime, IMediaSample* Samplep)){//(double SampleTime,unsigned char *pBuffer,long BufferLen)){ //selected resolution is position in array
     //Setup user selected format of CaptureSource Filter Stream
     CameraIn->_StreamCfgP->lpVtbl->SetFormat(CameraIn->_StreamCfgP,(CameraIn->_amMediaArrayP[selectedResolution]));
     //Free unused formats
@@ -362,6 +408,41 @@ int registerCameraCallback(struct CameraStorageObject* CameraIn,int selectedReso
         return 1;
     }
 
+
+
+
+    //FIX TEST TODO REMOVE
+
+    //Create Null Renderer
+    IBaseFilter* NullRendFp=NULL;
+    if(S_OK!=CoCreateInstance(&CLSID_VideoRenderer, NULL, CLSCTX_INPROC_SERVER, &IID_IBaseFilter, (void**)&NullRendFp)){
+        dprintf(DBGT_ERROR,"Could not create NullRenderer Filter");
+        return 1;
+    }
+    if(S_OK!=CameraIn->_GraphP->lpVtbl->AddFilter(CameraIn->_GraphP,NullRendFp,L"Null Filter")){
+        dprintf(DBGT_ERROR,"Could not add NullRenderer Filter to graph");
+        return 1;
+    }
+
+    //Connect SampleGrabber output to null renderer
+    IPin* SampleGrabberFOutPinP=NULL;
+    IPin* NullRendFInPinP=NULL;
+    if(S_OK!=FindFirstUnconnectedPin(SampleGrabberFp,PINDIR_OUTPUT,&SampleGrabberFOutPinP)){
+        dprintf(DBGT_ERROR,"Could not find an unconnected input pin on NullRenderer Filter");
+        return 1;
+    }
+    if(S_OK!=FindFirstUnconnectedPin(NullRendFp,PINDIR_INPUT,&NullRendFInPinP)){
+        dprintf(DBGT_ERROR,"Could not find an unconnected input pin on NullRenderer Filter");
+        return 1;
+    }
+    if(S_OK!=CameraIn->_GraphP->lpVtbl->Connect(CameraIn->_GraphP,SampleGrabberFOutPinP,NullRendFInPinP)){
+        dprintf(DBGT_ERROR,"Could not connect SampleGrabber and NullRenderer");
+        return 1;
+    }
+
+
+
+    /*
     //Create Null Renderer
     IBaseFilter* NullRendFp=NULL;
     if(S_OK!=CoCreateInstance(&CLSID_NullRenderer, NULL, CLSCTX_INPROC_SERVER, &IID_IBaseFilter, (void**)&NullRendFp)){
@@ -388,6 +469,7 @@ int registerCameraCallback(struct CameraStorageObject* CameraIn,int selectedReso
         dprintf(DBGT_ERROR,"Could not connect SampleGrabber and NullRenderer");
         return 1;
     }
+    */
 
     //Free all querried Pins
     CameraOutFPinp->lpVtbl->Release(CameraOutFPinp);
@@ -396,7 +478,7 @@ int registerCameraCallback(struct CameraStorageObject* CameraIn,int selectedReso
     NullRendFInPinP->lpVtbl->Release(NullRendFInPinP);
 
     //Setup callback of SampleGrabber
-    if(S_OK!=SampleGrabberp->lpVtbl->SetCallback(SampleGrabberp,create_ISampleGrabberCB(CBFunp),1)){ //1 stands for giving the called function an pointer to the buffer storing the media sample
+    if(S_OK!=SampleGrabberp->lpVtbl->SetCallback(SampleGrabberp,create_ISampleGrabberCB(CBFunp),0)){ //1 stands for giving the called function an pointer to the buffer storing the media sample
         dprintf(DBGT_ERROR,"Error while setting callback of sampleGrabber");
         return 1;
     }
