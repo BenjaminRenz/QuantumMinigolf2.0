@@ -4,6 +4,7 @@
 
 #include <dshow.h>
 #include <guiddef.h>
+#include <winnt.h>  //for InterlockedIncrement/Decrement
 #include <qedit.h>  //For sample grabber
 #include <stdio.h>
 #include <strmif.h>
@@ -56,5 +57,5 @@ struct CameraListItem* getCameras(unsigned int* numberOfCameras);
 
 
 struct CameraStorageObject* getAvailableCameraResolutions(struct CameraListItem CameraIn);
-int registerCameraCallback(struct CameraStorageObject* CameraIn,int selectedResolution,ISampleGrabberCB (*callbackForGraphviewFuncPointer) (void*, IMediaSample*) );  //selected resolution is position in array
+int registerCameraCallback(struct CameraStorageObject* CameraIn,int selectedResolution,long (*CBFunp)(double SampleTime,unsigned char *pBuffer,long BufferLen));  //selected resolution is position in array
 #endif

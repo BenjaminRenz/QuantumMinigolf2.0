@@ -40,6 +40,7 @@
 			<Add library="libstrmiids" />
 		</Linker>
 		<Unit filename="inc/camera_dshow.h" />
+		<Unit filename="inc/debug/debug.h" />
 		<Unit filename="main.c">
 			<Option compilerVar="CC" />
 		</Unit>

@@ -15,13 +15,14 @@
 1591165160 source:c:\portableprogramms\gitprojects\quantumminigolf2.0\testprojects\multicamera_test\src\camera_dshow.c
 	"camera_dshow.h"
 
-1591476656 source:c:\users\badmin\desktop\gitprojects\quantumminigolf2.0\testprojects\multicamera_test\main.c
+1591498778 source:c:\users\badmin\desktop\gitprojects\quantumminigolf2.0\testprojects\multicamera_test\main.c
 	<stdio.h>
 	"camera_dshow.h"
 
-1591476656 c:\users\badmin\desktop\gitprojects\quantumminigolf2.0\testprojects\multicamera_test\inc\camera_dshow.h
+1591565685 c:\users\badmin\desktop\gitprojects\quantumminigolf2.0\testprojects\multicamera_test\inc\camera_dshow.h
 	<dshow.h>
 	<guiddef.h>
+	<winnt.h>
 	<qedit.h>
 	<stdio.h>
 	<strmif.h>

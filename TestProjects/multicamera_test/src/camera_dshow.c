@@ -60,6 +60,62 @@ void closeCamera(struct CameraStorageObject* Camera){
     CoUninitialize();
 }
 
+//see: https://docs.microsoft.com/de-de/office/client-developer/outlook/mapi/implementing-objects-in-c
+//see:
+
+//Define sample IGrabberCB object
+ULONG WINAPI IUNKN_AddRef(IGlobalInterfaceTable* this);
+ULONG WINAPI IUNKN_Release(IGlobalInterfaceTable* this);
+HRESULT IUNKN_QueryInterface(IGlobalInterfaceTable* this, REFIID riid, LPVOID* lppvObj);
+
+
+struct SampleGrabberCB_iface_struct{
+    struct SampleGrabberCB_lpVtbl* lpVtbl;
+    ULONG ref;      //reference count, works like smart pointer
+};
+
+ULONG WINAPI IUNKN_SG_AddRef(IGlobalInterfaceTable* this){
+    struct SampleGrabberCB_iface_struct* self=(struct SampleGrabberCB_iface_struct*) this;
+    InterlockedIncrement(&(self->ref));
+    return self->ref;
+}
+ULONG WINAPI IUNKN_SG_Release(IGlobalInterfaceTable* this){
+    struct SampleGrabberCB_iface_struct* self=(struct SampleGrabberCB_iface_struct*) this;
+    InterlockedDecrement(&(self->ref));
+    if(self->ref==0){
+        free(self);
+        dprintf(DBGT_INFO,"TODO tell the outside world that the interface has been dealocated");
+    }
+    return self->ref;
+}
+
+HRESULT IUNKN_SG_QueryInterface(IGlobalInterfaceTable* this, REFIID riid, LPVOID* lppvObj){
+    HRESULT hr = S_OK;
+    // check for nullptrs
+    if (!this || !lppvObj){
+        hr = ResultFromScode(E_INVALIDARG);
+        return hr;
+    }
+    *lppvObj = NULL;
+    // the interface is supported, increment the reference count and return
+    this->lpVtbl->AddRef(this);
+    *lppvObj = this;
+    return hr;
+}
+
+
+
+
+
+IUnknown* create_ISampleGrabberCB(long (*CBFunp)(double SampleTime,unsigned char *pBuffer,long BufferLen)){
+    struct SampleGrabberCB_iface_struct* objp=(struct SampleGrabberCB_iface_struct*)malloc(sizeof(struct SampleGrabberCB_iface_struct));
+    IGlobalInterfaceTableVtbl* lpVtbl=(IGlobalInterfaceTableVtbl*)malloc(sizeof(IGlobalInterfaceTableVtbl));
+    (*lpVtbl)={IUNKN_QueryInterface,IUNKN_SG_AddRef,IUNKN_Release,CBFunp,SampleCB};
+
+    //SampleGrabberCB methods
+    objp->lpVtbl=lpVtbl;
+    return (IUnknown*)objp;
+};
 
 struct CameraListItem* getCameras(unsigned int* numberOfCameras)
 {
@@ -239,8 +295,8 @@ struct CameraStorageObject* getAvailableCameraResolutions(struct CameraListItem 
     return CameraOut;
 }
 
-int registerCameraCallback(struct CameraStorageObject* CameraIn,int selectedResolution,ISampleGrabberCB (*callbackFuncp) (void*, IMediaSample*) ) //selected resolution is position in array
-{
+//CBFun
+int registerCameraCallback(struct CameraStorageObject* CameraIn,int selectedResolution,long (*CBFunp)(double SampleTime,unsigned char *pBuffer,long BufferLen)){ //selected resolution is position in array
     //Setup user selected format of CaptureSource Filter Stream
     CameraIn->_StreamCfgP->lpVtbl->SetFormat(CameraIn->_StreamCfgP,(CameraIn->_amMediaArrayP[selectedResolution]));
     //Free unused formats
@@ -339,7 +395,7 @@ int registerCameraCallback(struct CameraStorageObject* CameraIn,int selectedReso
     NullRendFInPinP->lpVtbl->Release(NullRendFInPinP);
 
     //Setup callback of SampleGrabber
-    if(S_OK!=SampleGrabberp->lpVtbl->SetCallback(SampleGrabberp,callbackFuncp,1)){ //1 stands for giving the called function an pointer to the buffer storing the media sample
+    if(S_OK!=SampleGrabberp->lpVtbl->SetCallback(SampleGrabberp,create_ISampleGrabberCB(CBFunp),1)){ //1 stands for giving the called function an pointer to the buffer storing the media sample
         dprintf(DBGT_ERROR,"Error while setting callback of sampleGrabber");
         return 1;
     }
