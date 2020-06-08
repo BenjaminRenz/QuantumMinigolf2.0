@@ -190,14 +190,8 @@ struct CameraListItem* getCameras(unsigned int* numberOfCameras)
 
     //Release the DeviceEnumerator after we have retrieved all available Video Devices
 
-    //TODO this is not working, we probably have to do this later, after we also have freed the Class Enumerator
-    HRESULT hr;
-    if(S_OK!=(hr=myDeviceEnum->lpVtbl->Release(myDeviceEnum))){
-        printf("Error: Could not release VideoDevice, ERROR %x!\n",hr);
-        return 0;
-    }
-
-
+    //Would return the left number of references to myDeviceEnum
+    myDeviceEnum->lpVtbl->Release(myDeviceEnum);
 
     IMoniker* myCamera=NULL;
     struct CameraListItem* CameraListItemp=NULL;        //create a pointer for the CameraIdentifier-structs we wish to alloacate
