@@ -191,10 +191,11 @@ struct CameraListItem* getCameras(unsigned int* numberOfCameras)
     //Release the DeviceEnumerator after we have retrieved all available Video Devices
 
     //TODO this is not working, we probably have to do this later, after we also have freed the Class Enumerator
-    /*if(S_OK!=myDeviceEnum->lpVtbl->Release(myDeviceEnum)){
-        printf("Error: Could not release VideoDevice!\n");
+    HRESULT hr;
+    if(S_OK!=(hr=myDeviceEnum->lpVtbl->Release(myDeviceEnum))){
+        printf("Error: Could not release VideoDevice, ERROR %x!\n",hr);
         return 0;
-    }*/
+    }
 
 
 
@@ -408,41 +409,6 @@ int registerCameraCallback(struct CameraStorageObject* CameraIn,int selectedReso
         return 1;
     }
 
-
-
-
-    //FIX TEST TODO REMOVE
-
-    //Create Null Renderer
-    IBaseFilter* NullRendFp=NULL;
-    if(S_OK!=CoCreateInstance(&CLSID_VideoRenderer, NULL, CLSCTX_INPROC_SERVER, &IID_IBaseFilter, (void**)&NullRendFp)){
-        dprintf(DBGT_ERROR,"Could not create NullRenderer Filter");
-        return 1;
-    }
-    if(S_OK!=CameraIn->_GraphP->lpVtbl->AddFilter(CameraIn->_GraphP,NullRendFp,L"Null Filter")){
-        dprintf(DBGT_ERROR,"Could not add NullRenderer Filter to graph");
-        return 1;
-    }
-
-    //Connect SampleGrabber output to null renderer
-    IPin* SampleGrabberFOutPinP=NULL;
-    IPin* NullRendFInPinP=NULL;
-    if(S_OK!=FindFirstUnconnectedPin(SampleGrabberFp,PINDIR_OUTPUT,&SampleGrabberFOutPinP)){
-        dprintf(DBGT_ERROR,"Could not find an unconnected input pin on NullRenderer Filter");
-        return 1;
-    }
-    if(S_OK!=FindFirstUnconnectedPin(NullRendFp,PINDIR_INPUT,&NullRendFInPinP)){
-        dprintf(DBGT_ERROR,"Could not find an unconnected input pin on NullRenderer Filter");
-        return 1;
-    }
-    if(S_OK!=CameraIn->_GraphP->lpVtbl->Connect(CameraIn->_GraphP,SampleGrabberFOutPinP,NullRendFInPinP)){
-        dprintf(DBGT_ERROR,"Could not connect SampleGrabber and NullRenderer");
-        return 1;
-    }
-
-
-
-    /*
     //Create Null Renderer
     IBaseFilter* NullRendFp=NULL;
     if(S_OK!=CoCreateInstance(&CLSID_NullRenderer, NULL, CLSCTX_INPROC_SERVER, &IID_IBaseFilter, (void**)&NullRendFp)){
@@ -469,7 +435,7 @@ int registerCameraCallback(struct CameraStorageObject* CameraIn,int selectedReso
         dprintf(DBGT_ERROR,"Could not connect SampleGrabber and NullRenderer");
         return 1;
     }
-    */
+
 
     //Free all querried Pins
     CameraOutFPinp->lpVtbl->Release(CameraOutFPinp);
