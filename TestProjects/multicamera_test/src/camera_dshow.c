@@ -61,7 +61,7 @@ void closeCamera(struct CameraStorageObject* Camera){
 }
 
 //see: https://docs.microsoft.com/de-de/office/client-developer/outlook/mapi/implementing-objects-in-c
-//see:
+//see: https://www.codeproject.com/Articles/13601/COM-in-plain-C
 
 //Define sample IGrabberCB object
 ULONG WINAPI IUNKN_AddRef(IGlobalInterfaceTable* this);
@@ -107,14 +107,14 @@ HRESULT IUNKN_SG_QueryInterface(IGlobalInterfaceTable* this, REFIID riid, LPVOID
 
 
 
-IUnknown* create_ISampleGrabberCB(long (*CBFunp)(double SampleTime,unsigned char *pBuffer,long BufferLen)){
+void* create_ISampleGrabberCB(long (*CBFunp)(double SampleTime,unsigned char *pBuffer,long BufferLen)){
     struct SampleGrabberCB_iface_struct* objp=(struct SampleGrabberCB_iface_struct*)malloc(sizeof(struct SampleGrabberCB_iface_struct));
     IGlobalInterfaceTableVtbl* lpVtbl=(IGlobalInterfaceTableVtbl*)malloc(sizeof(IGlobalInterfaceTableVtbl));
-    (*lpVtbl)={IUNKN_QueryInterface,IUNKN_SG_AddRef,IUNKN_Release,CBFunp,SampleCB};
-
+    IGlobalInterfaceTableVtbl temp={&IUNKN_SG_QueryInterface,&IUNKN_SG_AddRef,&IUNKN_SG_Release,CBFunp};
+    (*lpVtbl)=temp;
     //SampleGrabberCB methods
     objp->lpVtbl=lpVtbl;
-    return (IUnknown*)objp;
+    return (void*)objp;
 };
 
 struct CameraListItem* getCameras(unsigned int* numberOfCameras)
@@ -329,7 +329,8 @@ int registerCameraCallback(struct CameraStorageObject* CameraIn,int selectedReso
 
     //Querry the interface of the SampleGrabberFilter
     ISampleGrabber* SampleGrabberp=NULL;
-    if(S_OK!=SampleGrabberFp->lpVtbl->QueryInterface(SampleGrabberFp,&IID_ISampleGrabber,(void**)SampleGrabberp)){
+    HRESULT hr;
+    if(S_OK!=(hr=SampleGrabberFp->lpVtbl->QueryInterface(SampleGrabberFp,&IID_ISampleGrabber,(void**)&SampleGrabberp))){
         dprintf(DBGT_ERROR,"Could not querry interface of SampleGrabber");
         return 1;
     }
